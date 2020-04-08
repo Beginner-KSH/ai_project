@@ -15,6 +15,8 @@ from openpose_utils import create_label_full, create_face_label
 from matplotlib import pyplot as plt
 from functools import cmp_to_key
 
+# source trasnsfer 하는 사람의 비디오 데이터로부터 pose stick과 face 영역의 data를 추출해내고 pose stick을 target video의 pose로 normalization 함.
+
 def gao(idx):
 	# if os.path.exists(test_label_dir.joinpath('%s.torch' % idx)):
 	# 	return
@@ -130,25 +132,30 @@ for anno_name in sorted(os.listdir(anno_dir))[: 1800]:
 		continue
 	if y < 10:
 		continue
-	scale.append([y, s, int(all_index[-1])])
+	scale.append([y, s, int(all_index[-1])]) # 최종적인 pose 값들을 scale에 리스트로 저장
+
+
 
 def xcmp(x, y):
 	return x[0] - y[0]
 
 scale = sorted(scale, key = cmp_to_key(xcmp))
+#scale 값을 오름차순으로 정렬시켜줌 참고 https://docs.python.org/ko/3/howto/sorting.html  cmp_to_key 두개의 인자를받아 들이고 비교하여 작으면 음수 같으면 0 크면 양수를 반환
+# y[0]-x[0] ==> 내림차순
 scale = np.array(scale)
-median = np.median(scale[:, 0])
+
+median = np.median(scale[:, 0]) #scale의 중앙값 저장
 xlen = int(scale.shape[0] * 0.05)
 d = (scale[-1, 0] - scale[0,0]) * 0.1
 print(scale.shape, d)
 
 
-idx = np.searchsorted(scale[:, 0], scale[-1, 0] - d)
+idx = np.searchsorted(scale[:, 0], scale[-1, 0] - d) #이진탐색 scale[:, 0]로부터  scale[-1, 0] - d값을 찾아내서 위치를 반환 참고 : https://cjh5414.github.io/binary-search/
 smax = scale[-idx:, 1].max()
 midx = scale[-idx:, 1].argmax()
 print (scale[-idx:, -1][midx])
 
-idx = np.searchsorted(scale[:, 0], scale[0, 0] + d, side = 'right')
+idx = np.searchsorted(scale[:, 0], scale[0, 0] + d, side = 'right') #이진탐색 scale[:, 0]로부터  scale[0, 0] - d값을 찾아내서 위치를 반환 참고 : https://cjh5414.github.io/binary-search/
 smin = scale[:idx, 1].max()
 midx = scale[:idx, 1].argmax()
 print (scale[:idx, -1][midx])

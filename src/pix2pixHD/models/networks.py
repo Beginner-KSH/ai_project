@@ -298,6 +298,7 @@ class Encoder(nn.Module):
                     outputs_mean[indices[:,0] + b, indices[:,1] + j, indices[:,2], indices[:,3]] = mean_feat                       
         return outputs_mean
 
+# MsCGAN 사용
 class MultiscaleDiscriminator(nn.Module):
     def __init__(self, input_nc, ndf=64, n_layers=3, norm_layer=nn.BatchNorm2d, 
                  use_sigmoid=False, num_D=3, getIntermFeat=False):
@@ -316,24 +317,21 @@ class MultiscaleDiscriminator(nn.Module):
                 setattr(self, 'layer'+str(i), netD.model)
 
         self.downsample = nn.AvgPool2d(3, stride=2, padding=[1, 1], count_include_pad=False)
+        # 3x3 window size
+        # 입력/2 x 입력/2으로 바꿔주는 downsample
         # downsample, avgpool 차원값 1/4
 
     def singleD_forward(self, model, input):
+        # Discriminator만 forward
         if self.getIntermFeat:
             result = [input]
             for i in range(len(model)):
                 result.append(model[i](result[-1]))
+                # input의 마지막 값을 i번째 model의 입력으로 넣었을때 결과값을 result에 다시 넣는다.
             return result[1:]
         else:
             return [model(input)]
-        # model에 input 넣었을때 #############################################################
-        ########################################################################################
-        ########################################################################################
-        ########################################################################################
-        ########################################################################################
-        ########################################################################################
-        ########################################################################################
-        ########################################################################################
+        # model에 input을 넣는다.
 
     def forward(self, input):        
         num_D = self.num_D
@@ -388,10 +386,12 @@ class NLayerDiscriminator(nn.Module):
 
         if use_sigmoid:
             sequence += [[nn.Sigmoid()]]
+        # sigmoid 활성화 함수 추가
 
         if getIntermFeat:
             for n in range(len(sequence)):
                 setattr(self, 'model'+str(n), nn.Sequential(*sequence[n]))
+                # sequence 수정
         else:
             sequence_stream = []
             for n in range(len(sequence)):
